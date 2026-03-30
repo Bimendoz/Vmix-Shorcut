@@ -1,0 +1,321 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>vMix Shortcuts - Control Console</title>
+    <style>
+        :root { 
+            --v-purple: #552583; 
+            --v-purple-light: #7b3eb3;
+            --v-bg: #050505; 
+            --v-card: #121212; 
+            --v-border: #2a2a2a; 
+            --v-text: #ffffff; 
+        }
+
+        html, body {
+            margin: 0; padding: 0; height: 100%; overflow: hidden; 
+            background-color: var(--v-bg); font-family: 'Inter', sans-serif; color: var(--v-text);
+        }
+
+        body { display: flex; flex-direction: column; align-items: center; }
+
+        .app-shell {
+            width: 100%; max-width: 950px; height: 100vh;
+            display: flex; flex-direction: column; padding: 15px; box-sizing: border-box;
+        }
+
+        .container { 
+            background-color: var(--v-card); border: 1px solid var(--v-purple); border-radius: 12px; 
+            display: flex; flex-direction: column; flex: 1; min-height: 0;
+            box-shadow: 0 10px 40px rgba(85, 37, 131, 0.3); padding: 20px; position: relative;
+        }
+        
+        header { flex-shrink: 0; }
+        h1 { color: var(--v-text); font-size: 24px; text-transform: uppercase; text-align: center; margin: 0 0 5px 0; letter-spacing: 2px; font-weight: 900; }
+        .subtitle { color: #888; font-size: 11px; text-align: center; display: block; margin-bottom: 15px; border-bottom: 1px solid var(--v-border); padding-bottom: 10px; font-weight: 400; }
+
+        .tabs { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; flex-shrink: 0; }
+        .tab-btn { 
+            background: #1a1a1a; border: 1px solid var(--v-border); color: #aaa; padding: 8px 16px; 
+            border-radius: 4px; cursor: pointer; white-space: nowrap; font-size: 11px; font-weight: bold; transition: 0.3s;
+        }
+        .tab-btn.active { border-color: var(--v-purple-light); color: white; background: var(--v-purple); }
+
+        .grid-viewport { flex: 1; overflow-y: auto; min-height: 0; padding-right: 5px; }
+        .function-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; grid-auto-rows: 1fr; }
+        
+        .func-card { 
+            background: #1a1a1a; border: 1px solid var(--v-border); padding: 12px; border-radius: 8px; 
+            cursor: pointer; transition: 0.2s; text-align: left; display: flex; flex-direction: column; min-height: 75px;
+        }
+        .func-card:hover { border-color: var(--v-purple-light); background: #252525; }
+        .func-name { color: var(--v-purple-light); font-family: 'Consolas', monospace; font-size: 13px; font-weight: bold; margin-bottom: 4px; }
+        .func-desc { color: #ccc; font-size: 10px; line-height: 1.4; }
+
+        .modal-overlay { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.95); z-index: 100; justify-content: center; align-items: center; backdrop-filter: blur(5px); 
+        }
+        .modal-content { 
+            background: var(--v-card); border: 1px solid var(--v-purple); border-radius: 12px; 
+            padding: 25px; max-width: 550px; width: 95%; max-height: 85vh; overflow-y: auto; 
+        }
+        
+        .modal-title { color: var(--v-purple-light); font-size: 18px; font-weight: bold; margin-bottom: 12px; font-family: 'Consolas', monospace; border-bottom: 1px solid var(--v-purple); padding-bottom: 8px; text-transform: uppercase; }
+        .section-title { color: var(--v-purple-light); font-size: 10px; font-weight: bold; text-transform: uppercase; margin-top: 15px; display: block; border-left: 3px solid var(--v-purple); padding-left: 8px; margin-bottom: 5px; }
+        .section-content { color: #ddd; font-size: 13px; line-height: 1.5; margin-bottom: 12px; text-align: justify; }
+
+        .modal-form { background: #080808; padding: 15px; border-radius: 8px; margin-top: 20px; border: 1px solid var(--v-border); }
+        .input-group { margin-bottom: 10px; }
+        .input-group label { display: block; font-size: 9px; color: var(--v-purple-light); text-transform: uppercase; margin-bottom: 4px; font-weight: bold; }
+        .modal-form input { width: 100%; background: #1a1a1a; border: 1px solid var(--v-border); padding: 8px; border-radius: 4px; color: #fff; box-sizing: border-box; outline: none; font-size: 13px; }
+        
+        .modal-buttons { display: flex; gap: 8px; margin-top: 15px; }
+        .btn-modal { flex: 1; padding: 12px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; text-transform: uppercase; border: none; transition: 0.2s; }
+        .btn-config { background: var(--v-purple); color: #fff; }
+        .btn-exit { background: #222; color: #fff; }
+        
+        .btn-finalizar { background: #1a1a1a; color: #fff; width: 100%; margin-top: 15px; border: 1px solid var(--v-purple); cursor: pointer; padding: 12px; border-radius: 6px; font-weight: bold; text-transform: uppercase; font-size: 11px; }
+
+        .modal-result { background: #000; padding: 12px; border-radius: 4px; border-left: 3px solid var(--v-purple-light); margin-top: 15px; display: none; }
+        .res-line { font-family: 'Consolas', monospace; font-size: 11px; margin-bottom: 4px; }
+        .res-label { color: var(--v-purple-light); margin-right: 10px; font-weight: bold; }
+
+        footer { text-align: center; padding: 10px; color: #444; font-size: 10px; letter-spacing: 1px; flex-shrink: 0; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: var(--v-purple); border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="app-shell">
+    <div class="container">
+        <header>
+            <h1>vMix Shortcuts</h1>
+            <span class="subtitle">Una solución más clara para que elijas la función correcta</span>
+            <div id="tabContainer" class="tabs"></div>
+        </header>
+
+        <div class="grid-viewport">
+            <div id="gridContainer" class="function-grid"></div>
+        </div>
+
+        <div id="masterModal" class="modal-overlay">
+            <div class="modal-content">
+                <div id="infoView">
+                    <div class="modal-title" id="mTitle"></div>
+                    <div id="mDescription"></div>
+                    <div class="modal-buttons">
+                        <button class="btn-modal btn-exit" onclick="closeModal()">Cancelar</button>
+                        <button class="btn-modal btn-config" onclick="showSetup()">Configurar</button>
+                    </div>
+                </div>
+
+                <div id="setupView" style="display:none;">
+                    <div class="modal-title">Configurar: <span id="sTitle"></span></div>
+                    <div class="modal-form">
+                        <div id="sInputGroup" class="input-group">
+                            <label>Target Input #</label>
+                            <input type="text" id="inNum" value="1">
+                        </div>
+                        <div id="sValueGroup" class="input-group">
+                            <label id="sValLabel">Valor</label>
+                            <input type="text" id="inVal" placeholder="...">
+                        </div>
+                        <button class="btn-modal btn-config" onclick="processGen()">Generar Shortcut</button>
+                    </div>
+                    
+                    <div id="mResult" class="modal-result">
+                        <div class="res-line"><span class="res-label">FUNCIÓN:</span> <span id="rf"></span></div>
+                        <div class="res-line"><span class="res-label">INPUT:</span> <span id="ri"></span></div>
+                        <div class="res-line"><span class="res-label">VALOR:</span> <span id="rv"></span></div>
+                        <button class="btn-finalizar" onclick="closeModal()">FINALIZAR</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer>© 2026 Mas4dBu. All rights reserved.</footer>
+</div>
+
+<script>
+const DB_ALL = {
+  "General": [
+    { "name": "ActivatorRefresh", "desc": "Sincroniza luces MIDI.", "val": "", "h": "Refresca la comunicación entre vMix y tus controladores físicos. Reinicia el protocolo de los 'activadores' (las luces que ves en tus botones).", "u": "Se usa cuando los LEDs de tu consola MIDI no coinciden con el estado del software (ej. el botón de Mute no brilla pero el audio está apagado).", "e": "Notas que tras un error de conexión tus botones dejaron de brillar; activas esto y vMix vuelve a 'despertar' las luces de tu hardware." },
+    { "name": "CallManagerShowHide", "desc": "Panel vMix Call.", "val": "", "h": "Muestra u oculta la ventana flotante donde gestionas a los invitados que se conectan por link web. Controlas sus retornos y ves su estado.", "u": "Para monitorizar discretamente a un invitado antes de sacarlo al aire sin que te estorbe la ventana todo el tiempo.", "e": "Quieres verificar si el experto ya entró a la llamada; abres el panel, confirmas su video y lo ocultas para seguir operando la mezcla." },
+    { "name": "KeyPress", "desc": "Simula tecla física.", "val": "Key", "h": "Envía una señal de pulsación de tecla directamente al sistema operativo Windows, actuando como un dedo presionando el teclado real.", "u": "Para controlar aplicaciones externas (PowerPoint, navegadores, reproductores) desde dentro de vMix.", "e": "Necesitas que al presionar un botón en tu StreamDeck se pase la siguiente diapositiva de un PowerPoint que tienes en otro monitor." },
+    { "name": "SendKeys", "desc": "Secuencia de teclas.", "val": "Keys", "h": "Manda una cadena de caracteres o comandos de teclado (atajos) a la ventana que tengas activa en ese momento en tu PC.", "u": "Automatizar acciones complejas en programas de terceros, como escribir un comando en un chat o un software de gráficos.", "e": "Quieres enviar el comando 'Ctrl+S' a un software de edición externo para ir guardando cambios automáticamente." },
+    { "name": "SetDynamicValue1", "desc": "Valor Dinámico 1.", "val": "Value", "h": "Guarda un dato específico en la ranura de memoria interna 'DynamicValue1'. Es un almacén temporal de información.", "u": "Se usa para automatizar títulos o disparadores (Triggers) que leen este valor para cambiar textos o comportamientos.", "e": "Tienes un gráfico de puntaje; usas esto para cambiar el nombre de un equipo sin entrar a la configuración del título." },
+    { "name": "SetDynamicValue2", "desc": "Valor Dinámico 2.", "val": "Value", "h": "Almacena información en la segunda ranura de memoria dinámica del sistema vMix.", "u": "Para manejar una segunda variable independiente en producciones con muchos datos cambiantes.", "e": "Usas este valor para actualizar el cronómetro o una noticia de última hora que aparece en un banner." },
+    { "name": "SetDynamicValue3", "desc": "Valor Dinámico 3.", "val": "Value", "h": "Guarda datos en la tercera ranura de memoria interna del software.", "u": "Manejo avanzado de scripts y automatización de datos.", "e": "Definir un valor numérico que un disparador usará para decidir qué cámara activar." },
+    { "name": "SetDynamicValue4", "desc": "Valor Dinámico 4.", "val": "Value", "h": "Ocupa la cuarta y última ranura de variables dinámicas disponibles en vMix.", "u": "Completa el sistema de automatización para flujos de trabajo muy complejos.", "e": "Cambiar la fuente de una base de datos dinámica que alimenta tus redes sociales en pantalla." },
+    { "name": "Undo", "desc": "Recuperar entrada cerrada.", "val": "", "h": "Busca en la papelera de reciclaje temporal del programa y restaura el último input que fue cerrado o borrado.", "u": "Es la red de seguridad del operador. Recupera fuentes que se borraron accidentalmente.", "e": "Estás limpiando inputs y borras por error la cámara del presentador; presionas Undo y vuelve con todos sus ajustes intactos." }
+  ],
+  "Audio": [
+    { "name": "Audio", "desc": "Alternar Silencio (Mute).", "val": "", "h": "Funciona como un interruptor: si el sonido está pasando, lo bloquea; si está bloqueado, lo deja pasar. Cambia el estado 'Mute' del input.", "u": "Es el comando más común para abrir y cerrar micrófonos o pistas de música de forma rápida.", "e": "Tienes 3 inputs de audio; el presentador termina de hablar y presionas este botón para silenciar su micrófono al instante." },
+    { "name": "AudioAuto", "desc": "Audio automático por aire.", "val": "", "h": "Vincula el audio al bus de Programa. El sonido solo suena si el input está visible para el espectador (al aire).", "u": "Para evitar ruidos accidentales de cámaras o videos que están en previo o esperando su turno.", "e": "Configuras un video en el Input 2; su música solo empezará a sonar en el streaming en el momento que hagas el corte a esa cámara." },
+    { "name": "AudioAutoOff", "desc": "Desactivar Audio Auto.", "val": "", "h": "Desvincula el audio de las transiciones. El audio se mantendrá abierto o cerrado manualmente, sin importar el video.", "u": "Cuando necesitas que una música o micrófono se quede sonando de forma permanente aunque cambies de escena.", "e": "Tienes música de fondo; quieres cambiar de cámara pero no quieres que la música se corte, así que desactivas el AudioAuto." },
+    { "name": "AudioAutoOn", "desc": "Activar Audio Auto.", "val": "", "h": "Fuerza a que el audio del input obedezca al estado de la transición a Programa (Aire).", "u": "Para automatizar la mezcla en eventos donde el operador está solo y no puede abrir canales manualmente.", "e": "Aseguras que la intro del programa siempre entre con su audio activado apenas el contador llegue a cero." },
+    { "name": "AudioBus", "desc": "Alternar envío a Bus.", "val": "Bus (M,A-G)", "h": "Conecta o desconecta el audio de un input hacia una salida auxiliar específica (Buses A, B, C, etc.).", "u": "Crear mezclas independientes (Mix-Minus) para que un invitado escuche el programa pero no su propia voz.", "e": "Envías el Input 1 al Bus A para que el presentador escuche el video que está comentando en sus audífonos." },
+    { "name": "AudioBusOff", "desc": "Quitar envío a Bus.", "val": "Bus (M,A-G)", "h": "Corta de forma definitiva la ruta de sonido hacia la salida auxiliar seleccionada.", "u": "Silenciar retornos de audio para invitados o grabaciones secundarias rápidamente.", "e": "Quieres que el invitado deje de escuchar la música del programa en su retorno; apagas su envío al Bus B." },
+    { "name": "AudioBusOn", "desc": "Activar envío a Bus.", "val": "Bus (M,A-G)", "h": "Habilita el puente de sonido desde el input hacia el Bus auxiliar configurado.", "u": "Para alimentar sistemas externos, como cabinas de traducción o monitores de piso.", "e": "Mandar el audio del traductor al Bus C para que solo la audiencia en ese canal lo escuche." },
+    { "name": "AudioChannelMatrixApplyPreset", "desc": "Ruteo de canales.", "val": "Preset Name", "h": "Cambia la configuración interna de la matriz de audio (qué canal va a la izquierda o derecha) usando un ajuste guardado.", "u": "Corregir problemas de audio que viene solo por un lado o cambiar entre idiomas rápidamente.", "e": "Recibes una señal con audio en el canal 1; aplicas el preset 'Mono' para que el espectador escuche por ambos oídos." },
+    { "name": "AudioMixerShowHide", "desc": "Mezclador visual.", "val": "", "h": "Alterna la visibilidad del panel de control de volumen (Audio Mixer) en la interfaz de usuario.", "u": "Ahorrar espacio visual en el monitor de vMix una vez que los niveles ya están calibrados.", "e": "Abres el mixer para bajar un poco la música, y luego lo ocultas para tener una vista más limpia de tus cámaras." },
+    { "name": "AudioOff", "desc": "Fuerzar Silencio (Mute).", "val": "", "h": "Pone el input en silencio total. Es un comando de 'Solo Apagar', ignorando si ya estaba apagado.", "u": "Garantizar silencio en entradas críticas por seguridad (ej. micrófonos de producción).", "e": "El evento terminó; usas esto para asegurarte de que no se escape ningún sonido por accidente al streaming." },
+    { "name": "AudioOn", "desc": "Fuerzar Audio (Unmute).", "val": "", "h": "Abre el canal de sonido del input de forma obligatoria. Es un comando de 'Solo Encender'.", "u": "Asegurar que una fuente de audio se escuche en el momento exacto que se requiere.", "e": "El locutor empieza su discurso; presionas esto para garantizar que su micrófono esté abierto al aire." },
+    { "name": "AudioPluginOff", "desc": "Apagar Plugin VST.", "val": "Plugin #", "h": "Desactiva temporalmente el procesamiento de un efecto de audio (como un compresor o ecualizador) en el input.", "u": "Quitar un efecto que está fallando o que ya no es necesario sin eliminarlo de la lista.", "e": "El invitado tiene una voz muy grave; apagas el plugin de refuerzo de bajos para que se entienda mejor." },
+    { "name": "AudioPluginOn", "desc": "Activar Plugin VST.", "val": "Plugin #", "h": "Habilita el funcionamiento de un plugin de audio cargado previamente en el input.", "u": "Aplicar mejoras sonoras o filtros de ruido de forma inmediata durante el en vivo.", "e": "Hay mucho ruido de aire acondicionado; activas el plugin de 'Denoise' para limpiar la señal del micrófono." },
+    { "name": "AudioPluginOnOff", "desc": "Alternar Plugin VST.", "val": "Plugin #", "h": "Cambia entre activado y desactivado el estado del plugin seleccionado (Toggle).", "u": "Para comparar rápidamente cómo suena el audio con y sin el efecto aplicado.", "e": "Pruebas si el limitador de audio está ayudando a evitar saturación alternando el botón mientras hay ruido fuerte." },
+    { "name": "AudioPluginShow", "desc": "Ver ventana Plugin.", "val": "Plugin #", "h": "Abre la interfaz gráfica (GUI) del plugin para que puedas ver y mover sus perillas en la pantalla.", "u": "Ajustar parámetros técnicos del efecto (ganancia, umbral, EQ) mientras estás operando.", "e": "Abres la ventana del ecualizador para ver visualmente dónde están los picos de frecuencia del invitado." }
+  ],
+  "QuickPlay": [
+    { "name": "Pause", "desc": "Pausar video.", "val": "", "h": "Detiene el avance de un clip de video o lista de reproducción en el cuadro exacto donde se encuentra.", "u": "Congelar una imagen para explicar un detalle o esperar a que el presentador termine una frase.", "e": "El video muestra una gráfica importante; lo pausas para que el público pueda leerla con calma." },
+    { "name": "Play", "desc": "Reproducir video.", "val": "", "h": "Inicia la marcha de un input de video desde el punto donde se detuvo o desde el inicio si está cargado.", "u": "Lanzar notas periodísticas, intros o clips de apoyo en el momento justo del guion.", "e": "El conductor dice: 'Vamos a ver la nota'; tú presionas Play y el video comienza a correr inmediatamente." },
+    { "name": "Restart", "desc": "Reiniciar video.", "val": "", "h": "Vuelve el cabezal de reproducción de un video al segundo cero de forma instantánea.", "u": "Preparar un clip que ya se usó para que esté listo desde el inicio la próxima vez que se necesite.", "e": "Usaste el video de intro al inicio del show; usas Restart para que esté listo para el bloque de la tarde." },
+    { "name": "Stop", "desc": "Detener video.", "val": "", "h": "Para por completo la reproducción del input y corta el flujo de datos.", "u": "Finalizar un video de forma manual cuando no quieres que se quede en el último fotograma.", "e": "El video terminó pero vMix lo dejó pausado al final; presionas Stop para liberar el input." }
+  ],
+  "Output": [
+    { "name": "External2", "desc": "Alternar Salida 2.", "val": "", "h": "Activa o desactiva el segundo motor de salida hacia tarjetas de video o hardware externo.", "u": "Mandar tu señal de video a un monitor secundario o a un proyector físico.", "e": "Quieres mandar el programa limpio a la pantalla gigante del salón; activas External 2." },
+    { "name": "External2Off", "desc": "Apagar Salida 2.", "val": "", "h": "Corta el envío de señal hacia el hardware de salida número 2.", "u": "Finalizar la transmisión hacia un monitor o capturadora externa específica.", "e": "El evento terminó en el salón; apagas la salida del proyector para dejarlo en negro." },
+    { "name": "External2On", "desc": "Encender Salida 2.", "val": "", "h": "Inicia el flujo de video hacia el dispositivo físico configurado como salida 2.", "u": "Asegurar que la señal llegue a monitores de referencia o sistemas de grabación externos.", "e": "Activas la salida para que el equipo de prensa reciba tu señal de Programa." },
+    { "name": "ExternalFullscreen", "desc": "Pantalla Completa Ext.", "val": "", "h": "Muestra lo que vMix está procesando en pantalla completa en un monitor que tengas conectado a la PC.", "u": "Convertir un monitor común en una pantalla de salida profesional sin bordes de ventana.", "e": "Tienes un monitor frente al set; activas esto para que el presentador vea lo que sale al aire." },
+    { "name": "ExternalFullscreenOff", "desc": "Apagar Fullscreen Ext.", "val": "", "h": "Quita la imagen de pantalla completa del monitor secundario y vuelve al escritorio de Windows.", "u": "Recuperar el monitor para ver carpetas de archivos o navegar por internet.", "e": "Terminaste de mostrar el video; cierras el Fullscreen para abrir el guion en ese monitor." },
+    { "name": "ExternalFullscreenOn", "desc": "Encender Fullscreen Ext.", "val": "", "h": "Forza a que el monitor secundario muestre la señal de vMix en toda su resolución.", "u": "Presentar contenido a una audiencia presente en el lugar de forma inmediata.", "e": "Mandar el programa directo al monitor LED central del estudio." },
+    { "name": "Fullscreen", "desc": "Pantalla Completa Prin.", "val": "", "h": "Alterna el modo de pantalla completa en el monitor principal de salida de vMix.", "u": "Ver la mezcla final con el máximo detalle posible en un monitor dedicado.", "e": "Cambias entre ver vMix como una ventana de trabajo o como una pantalla de televisión final." },
+    { "name": "FullscreenOff", "desc": "Apagar Fullscreen Prin.", "val": "", "h": "Desactiva la previsualización en pantalla completa del monitor principal.", "u": "Regresar a la interfaz de control para hacer ajustes técnicos.", "e": "Necesitas entrar a la configuración de Windows; quitas el Fullscreen para ver la barra de tareas." },
+    { "name": "FullscreenOn", "desc": "Encender Fullscreen Prin.", "val": "", "h": "Activa la visualización de alta resolución en toda la pantalla del monitor configurado.", "u": "Control de calidad visual para asegurar que todo se vea perfecto antes de salir.", "e": "Pones el programa en el monitor central del control room para vigilar cada detalle." },
+    { "name": "FullscreenPreview", "desc": "Fullscreen Previos.", "val": "", "h": "Muestra lo que tienes cargado en 'Previos' (lo que sigue) en pantalla completa.", "u": "Revisar encuadres o textos de la siguiente cámara antes de hacer la transición.", "e": "Quieres ver si el invitado tiene algo en la cara; pones su cámara en FullscreenPreview para chequear." },
+    { "name": "FullscreenPreviewOff", "desc": "Apagar FS Previos.", "val": "", "h": "Quita la imagen de previa de la pantalla completa.", "u": "Limpiar el monitor de monitoreo para otros propósitos técnicos.", "e": "Ya verificaste la imagen; cierras el Fullscreen de previa para seguir mezclando." },
+    { "name": "FullscreenPreviewOn", "desc": "Encender FS Previos.", "val": "", "h": "Lleva la señal de previa a ocupar todo el espacio del monitor secundario.", "u": "Ayuda visual para el operador de cámaras o el director de arte.", "e": "Verificar foco y colores de la escena que entrará a continuación en un monitor grande." },
+    { "name": "NDIOnOff", "desc": "Alternar NDI.", "val": "", "h": "Activa o desactiva la salida de video por red local mediante el protocolo NDI.", "u": "Compartir tu señal con otras computadoras en la misma red Wi-Fi o cableada sin usar cables HDMI/SDI.", "e": "Mandar tu programa a la PC de redes sociales para que ellos graben clips cortos." },
+    { "name": "OutputMultiView", "desc": "Alternar MultiView.", "val": "", "h": "Cambia la salida para mostrar una cuadrícula con todas tus fuentes al mismo tiempo.", "u": "Monitorear todas tus cámaras y videos desde un solo monitor externo.", "e": "Quieres que en la pantalla del productor se vean las 8 cámaras a la vez para que él te dirija." },
+    { "name": "OutputMultiViewOff", "desc": "Apagar MultiView.", "val": "", "h": "Quita la cuadrícula de cámaras de la salida y regresa a la señal de programa limpia.", "u": "Restablecer la señal estándar de video para streaming o grabación.", "e": "Ya no necesitas supervisar todas las fuentes; vuelves a mostrar solo el aire principal." },
+    { "name": "OutputMultiViewOn", "desc": "Encender MultiView.", "val": "", "h": "Habilita la rejilla de monitoreo múltiple en el canal de salida seleccionado.", "u": "Dar una visión global de la producción al equipo técnico.", "e": "Poner el mosaico de cámaras en el monitor de referencia de la pared." },
+    { "name": "OutputPreview", "desc": "Alternar Output Preview.", "val": "", "h": "Cambia la salida para mostrar lo que está en 'Previos' en lugar de lo que está al aire.", "u": "Mandar la siguiente escena a un monitor específico para que el equipo se prepare.", "e": "El presentador quiere ver qué video sigue; le mandas el Output Preview a su monitor privado." },
+    { "name": "OutputPreviewOff", "desc": "Apagar Output Preview.", "val": "", "h": "Deja de mostrar la señal de previa en la salida configurada.", "u": "Regresar todos los monitores a mostrar el programa principal que ve la audiencia.", "e": "Vuelves a mostrar el aire principal en la pantalla del estudio." },
+    { "name": "OutputPreviewOn", "desc": "Encender Output Preview.", "val": "", "h": "Fuerza la visualización de la señal de previa en el hardware de salida elegido.", "u": "Chequeo visual externo detallado de la escena que entrará en el próximo corte.", "e": "Mandar la señal de previo al monitor de un asistente de producción." },
+    { "name": "OutputWeb", "desc": "Alternar Output Web.", "val": "", "h": "Habilita o deshabilita la salida optimizada para ser vista desde un navegador web local.", "u": "Permitir que personas en la misma red vean el programa desde su celular o laptop sin apps extras.", "e": "Le pasas una URL interna a tu cliente para que vea el progreso del evento desde su oficina." },
+    { "name": "OutputWebOff", "desc": "Apagar Output Web.", "val": "", "h": "Apaga el servidor de video web interno de vMix.", "u": "Cerrar el acceso por red para ahorrar recursos o por seguridad de la señal.", "e": "Terminaste el pase privado y cierras el acceso web inmediatamente." },
+    { "name": "OutputWebOn", "desc": "Encender Output Web.", "val": "", "h": "Inicia la transmisión de la señal de programa hacia el protocolo de visualización web.", "u": "Habilitar el monitoreo remoto por red inalámbrica para el equipo técnico.", "e": "Abrir el puerto de video para que el director vea la señal desde su tablet." },
+    { "name": "Record", "desc": "Alternar Grabación.", "val": "", "h": "Inicia o detiene la captura del programa final en un archivo de video en tu disco duro.", "u": "Guardar el evento completo para subirlo después a YouTube o para tener un respaldo legal.", "e": "Dices 'Grabando' y presionas el botón al empezar; al terminar, presionas de nuevo para cerrar el archivo." },
+    { "name": "RecordOff", "desc": "Apagar Grabación.", "val": "", "h": "Finaliza y cierra de forma segura la escritura del archivo de video en el almacenamiento.", "u": "Asegurar que el video no se dañe al terminar la producción.", "e": "El programa terminó; detienes la grabación para poder copiar el archivo a un disco externo." },
+    { "name": "RecordOn", "desc": "Encender Grabación.", "val": "", "h": "Empieza a escribir los datos del programa en el formato (MP4, MKV, etc.) y ruta configurados.", "u": "Garantizar que el inicio del evento quede registrado desde el primer segundo.", "e": "Faltan 5 segundos para el aire; activas RecordOn para capturar hasta el suspiro inicial." },
+    { "name": "ReplaySave", "desc": "Guardar Replay.", "val": "", "h": "Captura instantáneamente los últimos segundos de video de la memoria y los guarda como un clip independiente.", "u": "Crear repeticiones instantáneas de jugadas en deportes o momentos memorables en charlas.", "e": "Hubo un golazo; presionas esto y vMix guarda la jugada automáticamente para que la muestres de nuevo." },
+    { "name": "Streaming", "desc": "Alternar Transmisión.", "val": "", "h": "Inicia o detiene el envío de datos a las plataformas de en vivo (YouTube, Facebook, Twitch).", "u": "Salir al aire hacia internet o terminar la emisión pública.", "e": "Presionas el botón para ir 'Live' en YouTube; lo presionas al final para despedirte de la audiencia." },
+    { "name": "StreamingOff", "desc": "Apagar Transmisión.", "val": "", "h": "Corta la conexión de datos con los servidores de streaming de forma controlada.", "u": "Terminar el show de forma limpia una vez que los conductores se han despedido.", "e": "El presentador dice 'Hasta mañana'; esperas 3 segundos y cortas el Streaming." },
+    { "name": "StreamingOn", "desc": "Encender Transmisión.", "val": "", "h": "Establece la conexión y empieza a mandar la señal a internet en las cuentas configuradas.", "u": "Garantizar que la audiencia en internet reciba la señal justo a tiempo.", "e": "El reloj llega a cero; activas StreamingOn para que todo el mundo te vea." }
+  ],
+  "Input": [
+    { "name": "AddInput", "desc": "Añadir nuevo input.", "val": "", "h": "Abre el menú de vMix para agregar una nueva fuente (cámara, video, imagen, NDI, etc.).", "u": "Traer nuevo contenido a tu producción en tiempo real.", "e": "Necesitas mostrar una imagen que acabas de recibir; activas esto para buscarla y añadirla." },
+    { "name": "AudioBusA", "desc": "Toggle Bus A.", "val": "", "h": "Conecta o desconecta el audio de este input específico al Bus auxiliar A.", "u": "Manejo de mezclas secundarias rápidas.", "e": "Quieres que este video se escuche en el salón pero no en el streaming." },
+    { "name": "AudioBusB", "desc": "Toggle Bus B.", "val": "", "h": "Alterna el envío de audio de esta entrada hacia el Bus B.", "u": "Controlar retornos para invitados.", "e": "Mandar el audio del moderador al retorno de los invitados remotos." },
+    { "name": "AudioBusC", "desc": "Toggle Bus C.", "val": "", "h": "Conecta/desconecta el audio de este input al Bus auxiliar C.", "u": "Ruteo de audio avanzado.", "e": "Mandar música solo a la grabación de respaldo." },
+    { "name": "AudioBusD", "desc": "Toggle Bus D.", "val": "", "h": "Gestiona el envío de audio de la entrada hacia el canal auxiliar D.", "u": "Multiaudio en producciones grandes.", "e": "Mandar el audio de traducción al canal 4 de salida." },
+    { "name": "AudioBusE", "desc": "Toggle Bus E.", "val": "", "h": "Alterna el flujo de sonido hacia el quinto bus auxiliar (E).", "u": "Monitoreo técnico especializado.", "e": "Mandar el audio de intercom al monitor del director." },
+    { "name": "AudioBusF", "desc": "Toggle Bus F.", "val": "", "h": "Controla el envío de audio hacia el Bus auxiliar F.", "u": "Ruteo de señal para streaming alternativos.", "e": "Mandar audio ambiente a una salida de seguridad." },
+    { "name": "AudioBusG", "desc": "Toggle Bus G.", "val": "", "h": "Conecta o desconecta el audio al último bus auxiliar (G).", "u": "Máxima flexibilidad de ruteo.", "e": "Usar el bus G para una mezcla de monitoreo en backstage." },
+    { "name": "AudioBusMaster", "desc": "Toggle Master Audio.", "val": "", "h": "Activa o desactiva el envío del audio de este input hacia la salida principal (Master).", "u": "Quitar una entrada de audio de la mezcla global rápidamente.", "e": "Quieres que un video se vea pero que su audio no salga por el streaming principal." },
+    { "name": "AudioChannel", "desc": "Set Audio Channel.", "val": "", "h": "Configura qué canal de audio (1 o 2) se procesará desde esta entrada.", "u": "Seleccionar fuentes mono en entradas estéreo.", "e": "Recibes dos idiomas; eliges el canal 1 para el streaming en español." },
+    { "name": "AudioFollowVideo", "desc": "Audio Follow Video.", "val": "", "h": "Alterna la función que hace que el audio se abra solo cuando el video está al aire.", "u": "Automatización de mezcla básica.", "e": "Al pasar a la cámara 1, su micrófono se abre; al quitarla, se cierra solo." },
+    { "name": "AudioVolume", "desc": "Volumen Audio.", "val": "0-100", "h": "Ajusta el nivel de ganancia de salida para este input específico.", "u": "Nivelar el sonido de diferentes fuentes para que no sature ni se escuche bajo.", "e": "El video de la entrevista viene muy fuerte; bajas su volumen a 50 con este shortcut." },
+    { "name": "AudioBalance", "desc": "Balance Audio.", "val": "-1 a 1", "h": "Ajusta la distribución del sonido entre el canal izquierdo y derecho.", "u": "Corregir audios que se escuchan más de un lado que del otro.", "e": "Mueves el balance a la izquierda para centrar un sonido que venía fallado." },
+    { "name": "Crop", "desc": "Recortar Input.", "val": "X,Y,W,H", "h": "Recorta los bordes del input seleccionado para mostrar solo una parte de la imagen.", "u": "Eliminar bordes negros o centrar la atención en una parte de la cámara.", "e": "Recortas el logo de una web que estás capturando para que no se vea el navegador." },
+    { "name": "Fade", "desc": "Fundido Input.", "val": "Duración", "h": "Realiza una transición de fundido suave hacia este input.", "u": "Hacer cambios de cámara elegantes y pausados.", "e": "Pasas de la cámara 1 a la 2 con un fundido de 500ms para un look cinematográfico." },
+    { "name": "Filter", "desc": "Aplicar Filtro.", "val": "Filter Name", "h": "Aplica un efecto visual (como blanco y negro o sepia) al input.", "u": "Cambiar el estilo artístico de una cámara instantáneamente.", "e": "Pones el Input 3 en blanco y negro para un flashback en vivo." },
+    { "name": "FlipHorizontal", "desc": "Reflejo Horizontal.", "val": "", "h": "Invierte la imagen de izquierda a derecha (efecto espejo).", "u": "Corregir cámaras que están al revés o ajustar la estética del set.", "e": "Tu cámara frontal se ve invertida; usas esto para que los textos se lean bien." },
+    { "name": "FlipVertical", "desc": "Reflejo Vertical.", "val": "", "h": "Invierte la imagen de arriba hacia abajo.", "u": "Corregir cámaras instaladas en el techo o soportes invertidos.", "e": "Instalaste una webcam boca abajo; con esto la pones derecha en un segundo." },
+    { "name": "Loop", "desc": "Alternar Bucle.", "val": "", "h": "Activa o desactiva la repetición infinita de un video o lista.", "u": "Mantener fondos animados o música sonando sin parar.", "e": "Pones el video de fondo del set en Loop para que nunca se quede en negro." },
+    { "name": "LoopOff", "desc": "Apagar Bucle.", "val": "", "h": "Desactiva la repetición automática del input.", "u": "Asegurar que un video se detenga al finalizar.", "e": "Configuras tu nota periodística para que no se repita al terminar." },
+    { "name": "LoopOn", "desc": "Encender Bucle.", "val": "", "h": "Fuerza a que el input vuelva a empezar apenas termine.", "u": "Garantizar que un logo animado esté siempre en pantalla.", "e": "Activas el Loop en tu cortina de espera mientras empieza el show." },
+    { "name": "Mute", "desc": "Silenciar Input.", "val": "", "h": "Apaga el audio del input seleccionado de forma inmediata.", "u": "Cerrar canales de sonido sin afectar otros ajustes.", "e": "Muteas el micrófono del asistente que entró por error al set." },
+    { "name": "PanX", "desc": "Ajustar Pan X.", "val": "-1 a 1", "h": "Mueve la posición horizontal de la imagen dentro del encuadre.", "u": "Encuadrar mejor a un invitado sin mover la cámara física.", "e": "Mueves la imagen a la derecha para dejar espacio a un texto lateral." },
+    { "name": "PanY", "desc": "Ajustar Pan Y.", "val": "-1 a 1", "h": "Mueve la posición vertical (arriba/abajo) de la imagen.", "u": "Corregir el aire sobre la cabeza de un presentador.", "e": "Bajas la imagen del Input 1 para que el invitado quede bien centrado." },
+    { "name": "Position", "desc": "Set Position.", "val": "X,Y", "h": "Define las coordenadas exactas de ubicación de la imagen en pantalla.", "u": "Crear composiciones tipo 'Picture in Picture' precisas.", "e": "Ubicas el video del invitado en la esquina superior derecha del diseño." },
+    { "name": "Rotate", "desc": "Rotar Input.", "val": "Grados", "h": "Gira la imagen en su propio eje según los grados indicados.", "u": "Corregir cámaras de celulares grabadas de lado o crear efectos dinámicos.", "e": "Rotas 90 grados un video de TikTok para que se vea vertical en tu programa." },
+    { "name": "Scale", "desc": "Escalar Input.", "val": "0 a 2", "h": "Cambia el tamaño (Zoom) de la imagen del input.", "u": "Hacer acercamientos digitales o achicar fuentes para multiview.", "e": "Aumentas la escala a 1.5 para hacer un 'close-up' digital a tu cámara principal." },
+    { "name": "SetAlpha", "desc": "Transparencia.", "val": "0-255", "h": "Ajusta la opacidad de la imagen. 0 es invisible, 255 es sólido.", "u": "Crear marcas de agua sutiles o efectos de desvanecimiento.", "e": "Bajas el Alpha de tu logo al 120 para que se vea semitransparente." },
+    { "name": "SetColor", "desc": "Color Input.", "val": "Hex", "h": "Cambia el color de fondo de un input tipo 'Color' o 'Sólido'.", "u": "Cambiar la estética del set virtual o fondos de texto en vivo.", "e": "Cambias el fondo de negro a azul para que combine con la marca del patrocinador." },
+    { "name": "SetText", "desc": "Setear Texto.", "val": "Texto", "h": "Sobrescribe el contenido de un campo de texto dentro de un título de vMix.", "u": "Actualizar nombres, noticias o marcadores de forma instantánea.", "e": "Escribes el nombre del nuevo ganador y aparece en pantalla al segundo." },
+    { "name": "SetImage", "desc": "Setear Imagen.", "val": "Ruta", "h": "Cambia la imagen cargada en un input por otra desde el disco duro.", "u": "Actualizar fotos de invitados o patrocinadores rápidamente.", "e": "Cambias la foto del perfil del experto que va a hablar a continuación." },
+    { "name": "SetVideo", "desc": "Setear Video.", "val": "Ruta", "h": "Cambia el archivo de video cargado en el input por uno nuevo.", "u": "Reemplazar clips de apoyo durante la marcha del programa.", "e": "Cargas la versión editada de una nota sobre el input que ya tenías listo." },
+    { "name": "Snapshot", "desc": "Captura Foto.", "val": "", "h": "Toma una fotografía instantánea del fotograma actual de la entrada.", "u": "Crear miniaturas o guardar evidencias visuales del evento.", "e": "Tomas un Snapshot del momento de la premiación para subirlo a redes sociales." },
+    { "name": "Start", "desc": "Iniciar Input.", "val": "", "h": "Comienza la ejecución de una fuente (ej. arranca un reloj o una captura).", "u": "Disparar temporizadores o procesos de captura en el momento exacto.", "e": "Presionas Start para que el cronómetro de la competencia empiece a contar." },
+    { "name": "Stop", "desc": "Detener Input.", "val": "", "h": "Para el proceso o cronómetro que esté corriendo en esa entrada.", "u": "Finalizar tiempos o procesos técnicos de forma manual.", "e": "El corredor llega a la meta; presionas Stop para congelar el tiempo oficial." }
+  ],
+  "Transition": [
+    { "name": "CutDirect", "desc": "Corte instantáneo.", "val": "", "h": "Manda el input seleccionado directamente a la salida de programa sin pasar por transiciones suaves.", "u": "Cambios de cámara veloces y secos, ideales para música o diálogos rápidos.", "e": "El invitado empezó a hablar de repente; haces un CutDirect a su input para no perder su reacción." },
+    { "name": "FadeToBlack", "desc": "Salida a negro.", "val": "", "h": "Realiza un fundido gradual de toda la imagen y el audio maestro hacia el negro absoluto.", "u": "Es el final profesional de cualquier producción; se usa para despedirse o ir a comerciales.", "e": "El programa termina; el conductor se despide y tú activas esto para que todo se desvanezca suavemente." }
+  ]
+};
+
+let activeFunc = null;
+
+function init() {
+    const tabs = document.getElementById('tabContainer');
+    Object.keys(DB_ALL).forEach((cat, index) => {
+        const btn = document.createElement('button');
+        btn.className = `tab-btn ${index === 0 ? 'active' : ''}`;
+        btn.innerText = cat.toUpperCase();
+        btn.onclick = (e) => switchTab(cat, e.target);
+        tabs.appendChild(btn);
+    });
+    switchTab("General", tabs.firstChild);
+}
+
+function switchTab(cat, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const grid = document.getElementById('gridContainer');
+    grid.innerHTML = '';
+    DB_ALL[cat].forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'func-card';
+        card.onclick = () => openModal(item);
+        card.innerHTML = `<span class="func-name">${item.name}</span><span class="func-desc">${item.desc}</span>`;
+        grid.appendChild(card);
+    });
+}
+
+function openModal(item) {
+    activeFunc = item;
+    document.getElementById('mTitle').innerText = item.name;
+    document.getElementById('mDescription').innerHTML = `
+        <span class="section-title">🔹 ¿QUÉ HACE?</span><div class="section-content">${item.h}</div>
+        <span class="section-title">🔹 ¿PARA QUÉ SE USA?</span><div class="section-content">${item.u}</div>
+        <span class="section-title">🔹 EJEMPLO REAL</span><div class="section-content">${item.e}</div>
+    `;
+    document.getElementById('infoView').style.display = 'block';
+    document.getElementById('setupView').style.display = 'none';
+    document.getElementById('masterModal').style.display = 'flex';
+}
+
+function closeModal() { document.getElementById('masterModal').style.display = 'none'; }
+
+function showSetup() {
+    document.getElementById('infoView').style.display = 'none';
+    document.getElementById('setupView').style.display = 'block';
+    document.getElementById('sTitle').innerText = activeFunc.name;
+    document.getElementById('mResult').style.display = 'none';
+    
+    const globals = ["FadeToBlack", "Undo", "ActivatorRefresh", "CallManagerShowHide", "AudioMixerShowHide", "Record", "Streaming", "External2", "Fullscreen", "NDIOnOff", "Output", "ExternalFullscreen", "ReplaySave", "AddInput"];
+    const isGlobal = globals.some(g => activeFunc.name.includes(g));
+    
+    document.getElementById('sInputGroup').style.display = isGlobal ? 'none' : 'block';
+    document.getElementById('sValueGroup').style.display = activeFunc.val ? 'block' : 'none';
+    if(activeFunc.val) document.getElementById('sValLabel').innerText = activeFunc.val;
+}
+
+function processGen() {
+    document.getElementById('rf').innerText = activeFunc.name;
+    const isInputHidden = document.getElementById('sInputGroup').style.display === 'none';
+    document.getElementById('ri').innerText = isInputHidden ? "GLOBAL / AUTO" : (document.getElementById('inNum').value || "1");
+    document.getElementById('rv').innerText = activeFunc.val ? (document.getElementById('inVal').value || "Default") : "N/A";
+    document.getElementById('mResult').style.display = 'block';
+}
+
+window.onload = init;
+</script>
+</body>
+</html>
